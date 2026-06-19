@@ -19,13 +19,8 @@ RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 IMAGE_TAG=$IMAGE_TAG \
 		--fake-shell-output /bin/fake-sh \
 		--healthcheck-output /bin/hp_healthcheck
 
-RUN chmod +x /bin/hp_ssh.wasm
-RUN chmod +x /bin/hp_agent
-RUN chmod +x /bin/fake-sh
-RUN chmod +x /bin/hp_healthcheck
-
-# Folder needs to exist for later stages
-RUN mkdir -p /var/lib/headplane/agent
+RUN chmod +x /bin/hp_ssh.wasm /bin/hp_agent /bin/fake-sh /bin/hp_healthcheck \
+    && mkdir -p /var/lib/headplane/agent
 
 FROM --platform=$BUILDPLATFORM node:24-slim AS js-base
 WORKDIR /run
