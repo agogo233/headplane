@@ -1,5 +1,7 @@
 import { join } from "node:path";
 
+import { createContext } from "react-router";
+
 import log from "~/utils/log";
 
 import type { HeadplaneConfig } from "./config/config-schema";
@@ -14,10 +16,17 @@ import { createOidcService, type OidcService } from "./oidc/provider";
 import { createAuthService, type Principal } from "./web/auth";
 
 export type AppContext = Awaited<ReturnType<typeof createAppContext>>;
-
-declare module "react-router" {
-  interface AppLoadContext extends AppContext {}
-}
+export const agentsContext = createContext<AppContext["agents"]>();
+export const appConfigContext = createContext<AppContext["config"]>();
+export const authContext = createContext<AppContext["auth"]>();
+export const dbContext = createContext<AppContext["db"]>();
+export const headscaleContext = createContext<AppContext["headscale"]>();
+export const headscaleApiKeyContext = createContext<AppContext["headscaleApiKey"]>();
+export const headscaleConfigContext = createContext<AppContext["hs"]>();
+export const headscaleLiveStoreContext = createContext<AppContext["hsLive"]>();
+export const integrationContext = createContext<AppContext["integration"]>();
+export const oidcContext = createContext<AppContext["oidc"]>();
+export const requestApiContext = createContext<AppContext["apiForRequest"]>();
 
 export async function createAppContext(config: HeadplaneConfig) {
   const db = await createDbClient(join(config.server.data_path, "hp_persist.db"));
@@ -40,6 +49,18 @@ export async function createAppContext(config: HeadplaneConfig) {
   const auth = createAuthService({
     secret: config.server.cookie_secret,
     headscaleApiKey,
+    proxyAuth: config.server.proxy_auth
+      ? {
+          enabled: config.server.proxy_auth.enabled,
+          allowedCidrs: config.server.proxy_auth.allowed_cidrs,
+          trustedProxyCidrs: config.server.proxy_auth.trusted_proxy_cidrs,
+          ipHeader: config.server.proxy_auth.ip_header,
+          userHeader: config.server.proxy_auth.user_header,
+          emailHeader: config.server.proxy_auth.email_header,
+          nameHeader: config.server.proxy_auth.name_header,
+          pictureHeader: config.server.proxy_auth.picture_header,
+        }
+      : undefined,
     db,
     cookie: {
       name: "_hp_auth",
@@ -139,6 +160,7 @@ function buildOidc(
       usePkce: config.oidc.use_pkce,
       scope: config.oidc.scope,
       subjectClaims: config.oidc.subject_claims,
+      roleClaim: config.oidc.role_claim,
       allowWeakRsaKeys: config.oidc.allow_weak_rsa_keys,
       extraParams: config.oidc.extra_params,
       profilePictureSource: config.oidc.profile_picture_source,
